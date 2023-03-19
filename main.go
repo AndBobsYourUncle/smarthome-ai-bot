@@ -7,6 +7,7 @@ import (
 	"net"
 	"os"
 	"os/signal"
+	"smarthome_ai_bot/bot"
 	"smarthome_ai_bot/clients/gpt35turbo"
 	smarthomeaibotapiv1 "smarthome_ai_bot/gen/go/proto"
 	"smarthome_ai_bot/handlers"
@@ -26,15 +27,19 @@ func main() {
 	grpcServer := grpc.NewServer(opts...)
 
 	gpt35turboClient, err := gpt35turbo.NewClient(&gpt35turbo.Config{
-		OpenAIKey:     os.Getenv("OPENAI_API_KEY"),
-		UserShortName: os.Getenv("USER_SHORT_NAME"),
+		OpenAIKey: os.Getenv("OPENAI_API_KEY"),
 	})
 	if err != nil {
 		log.Fatalf("failed to create gpt35turbo client: %v", err)
 	}
 
+	aiBot, err := bot.NewBot(&bot.Config{
+		PromptClient:  gpt35turboClient,
+		UserShortName: os.Getenv("USER_SHORT_NAME"),
+	})
+
 	handler, err := handlers.NewGrpcV1(&handlers.Config{
-		PromptClient: gpt35turboClient,
+		AIBot: aiBot,
 	})
 
 	smarthomeaibotapiv1.RegisterSmarthomeAIBotAPIServer(grpcServer, handler)

@@ -1,7 +1,10 @@
 package clients
 
-import "context"
+import (
+	"context"
+	"smarthome_ai_bot/entities"
+)
 
 type PromptInterface interface {
-	SendPrompt(ctx context.Context, prompt string) (string, error)
+	RequestNextMessage(ctx context.Context, messages []*entities.Message) (*entities.Message, error)
 }

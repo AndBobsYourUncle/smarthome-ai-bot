@@ -3,16 +3,16 @@ package handlers
 import (
 	"context"
 	"errors"
-	"smarthome_ai_bot/clients"
+	"smarthome_ai_bot/bot"
 	smarthomeaibotapiv1 "smarthome_ai_bot/gen/go/proto"
 )
 
 type grpcV1 struct {
-	promptClient clients.PromptInterface
+	aiBot bot.Interface
 }
 
 type Config struct {
-	PromptClient clients.PromptInterface
+	AIBot bot.Interface
 }
 
 func NewGrpcV1(cfg *Config) (*grpcV1, error) {
@@ -20,12 +20,12 @@ func NewGrpcV1(cfg *Config) (*grpcV1, error) {
 		return nil, errors.New("missing parameter: cfg")
 	}
 
-	if cfg.PromptClient == nil {
-		return nil, errors.New("missing parameter: cfg.PromptClient")
+	if cfg.AIBot == nil {
+		return nil, errors.New("missing parameter: cfg.AIBot")
 	}
 
 	return &grpcV1{
-		promptClient: cfg.PromptClient,
+		aiBot: cfg.AIBot,
 	}, nil
 }
 
@@ -33,7 +33,7 @@ func (s *grpcV1) SendPrompt(
 	ctx context.Context,
 	req *smarthomeaibotapiv1.SendPromptRequest,
 ) (*smarthomeaibotapiv1.SendPromptResponse, error) {
-	response, err := s.promptClient.SendPrompt(ctx, req.Prompt)
+	response, err := s.aiBot.SendPrompt(ctx, req.Prompt)
 	if err != nil {
 		return nil, err
 	}
