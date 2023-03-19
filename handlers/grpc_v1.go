@@ -33,7 +33,7 @@ func (s *grpcV1) SendPrompt(
 	ctx context.Context,
 	req *smarthomeaibotapiv1.SendPromptRequest,
 ) (*smarthomeaibotapiv1.SendPromptResponse, error) {
-	response, err := s.aiBot.SendPrompt(ctx, req.Prompt)
+	response, err := s.aiBot.GetResponseToUserMessage(ctx, req.Prompt)
 	if err != nil {
 		return nil, err
 	}
