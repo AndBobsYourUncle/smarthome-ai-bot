@@ -12,6 +12,7 @@ import (
 
 type botImpl struct {
 	initialPromptContext []*entities.Message
+	messageHistory       []*entities.Message
 	promptClient         clients.PromptInterface
 }
 
@@ -75,8 +76,21 @@ func NewBot(cfg *Config) (Interface, error) {
 	}, nil
 }
 
+func (bot *botImpl) getMessagesToSend() []*entities.Message {
+	// return a new slice of messages that contains the initial prompt context and the message history
+	messagesToSend := make([]*entities.Message, len(bot.initialPromptContext)+len(bot.messageHistory))
+	copy(messagesToSend, bot.initialPromptContext)
+	copy(messagesToSend[len(bot.initialPromptContext):], bot.messageHistory)
+
+	return messagesToSend
+}
+
 func (bot *botImpl) GetResponseToUserMessage(ctx context.Context, userMessage string) (string, error) {
-	messagesToSend := append(bot.initialPromptContext, &entities.Message{
+	messagesToSend := bot.getMessagesToSend()
+
+	lengthOfInitialMessages := len(messagesToSend)
+
+	messagesToSend = append(messagesToSend, &entities.Message{
 		Role:    entities.RoleUser,
 		Content: userMessage,
 	})
@@ -88,6 +102,11 @@ func (bot *botImpl) GetResponseToUserMessage(ctx context.Context, userMessage st
 	if err != nil {
 		return "", err
 	}
+
+	messagesToSend = append(messagesToSend, &entities.Message{
+		Role:    entities.RoleBot,
+		Content: response.Content,
+	})
 
 	log.Printf("Bot response: %v", response.Content)
 
@@ -110,8 +129,16 @@ func (bot *botImpl) GetResponseToUserMessage(ctx context.Context, userMessage st
 			return "", err
 		}
 
+		messagesToSend = append(messagesToSend, &entities.Message{
+			Role:    entities.RoleBot,
+			Content: response.Content,
+		})
+
 		log.Printf("Bot response: %v", response.Content)
 	}
+
+	// add all new messages to the message history if we are successfully able to get a final response
+	bot.messageHistory = append(bot.messageHistory, messagesToSend[lengthOfInitialMessages:]...)
 
 	return response.Content, nil
 }
