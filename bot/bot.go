@@ -66,7 +66,7 @@ func NewBot(cfg *Config) (Interface, error) {
 		},
 		{
 			Role:    entities.RoleSystem,
-			Content: "Jarvis has now forgotten everything it knew about the living room temperature sensor.",
+			Content: "Any new requests for smarthome values or actions will need a new command sent to the system.",
 		},
 	}
 
