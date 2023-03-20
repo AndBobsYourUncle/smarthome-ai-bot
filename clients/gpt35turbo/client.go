@@ -57,7 +57,7 @@ func messagesToOpenAIChatCompletionMessages(messages []*entities.Message) []open
 }
 
 func (client *clientImpl) RequestNextMessage(ctx context.Context, messages []*entities.Message) (*entities.Message, error) {
-	reqCtx, cancelFnc := context.WithTimeout(ctx, time.Second*2)
+	reqCtx, cancelFnc := context.WithTimeout(ctx, time.Second*5)
 	defer cancelFnc()
 
 	resp, err := client.openAIClient.CreateChatCompletion(reqCtx, openai.ChatCompletionRequest{
