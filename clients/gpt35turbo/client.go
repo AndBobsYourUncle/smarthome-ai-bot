@@ -6,6 +6,7 @@ import (
 	"log"
 	"smarthome_ai_bot/clients"
 	"smarthome_ai_bot/entities"
+	"time"
 
 	"github.com/sashabaranov/go-openai"
 )
@@ -56,13 +57,13 @@ func messagesToOpenAIChatCompletionMessages(messages []*entities.Message) []open
 }
 
 func (client *clientImpl) RequestNextMessage(ctx context.Context, messages []*entities.Message) (*entities.Message, error) {
-	resp, err := client.openAIClient.CreateChatCompletion(
-		context.Background(),
-		openai.ChatCompletionRequest{
-			Model:    openai.GPT3Dot5Turbo,
-			Messages: messagesToOpenAIChatCompletionMessages(messages),
-		},
-	)
+	reqCtx, cancelFnc := context.WithTimeout(ctx, time.Second*2)
+	defer cancelFnc()
+
+	resp, err := client.openAIClient.CreateChatCompletion(reqCtx, openai.ChatCompletionRequest{
+		Model:    openai.GPT3Dot5Turbo,
+		Messages: messagesToOpenAIChatCompletionMessages(messages),
+	})
 	if err != nil {
 		log.Printf("ChatCompletion error: %v\n", err)
 
