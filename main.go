@@ -37,11 +37,17 @@ func main() {
 		PromptClient:  gpt35turboClient,
 		UserShortName: os.Getenv("USER_SHORT_NAME"),
 	})
+	if err != nil {
+		log.Fatalf("failed to create ai bot: %v", err)
+	}
 
 	handler, err := handlers.NewGrpcV1(&handlers.Config{
 		AIBot: aiBot,
 	})
-
+	if err != nil {
+		log.Fatalf("failed to create grpc v1 handler: %v", err)
+	}
+	
 	smarthomeaibotapiv1.RegisterSmarthomeAIBotAPIServer(grpcServer, handler)
 
 	ctx := context.Background()
