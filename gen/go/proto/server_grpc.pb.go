@@ -4,7 +4,7 @@
 // - protoc             (unknown)
 // source: proto/server.proto
 
-package smarthomeaibotapiv1
+package smarthome_ai_bot_apiv1
 
 import (
 	context "context"

@@ -63,6 +63,10 @@ func NewBot(cfg *Config) (Interface, error) {
 			Role:    entities.RoleBot,
 			Content: "The living room temperature appears to be 72 degrees.",
 		},
+		{
+			Role:    entities.RoleSystem,
+			Content: "Jarvis has now forgotten everything it knew about the living room temperature sensor.",
+		},
 	}
 
 	return &botImpl{

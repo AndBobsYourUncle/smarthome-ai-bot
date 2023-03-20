@@ -2,8 +2,6 @@ syntax = "proto3";
 
 package smarthome_ai_bot_api.v1;
 
-option go_package = "smarthome-ai-bot/api/v1;smarthomeaibotapiv1";
-
 service SmarthomeAIBotAPI {
   rpc SendPrompt(SendPromptRequest) returns (SendPromptResponse) {};
 }
