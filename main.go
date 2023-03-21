@@ -1,19 +1,12 @@
 package main
 
 import (
-	"context"
-	"fmt"
 	"log"
-	"net"
+	"net/http"
 	"os"
-	"os/signal"
 	"smarthome_ai_bot/bot"
 	"smarthome_ai_bot/clients/gpt35turbo"
-	smarthomeaibotapiv1 "smarthome_ai_bot/gen/go/proto"
 	"smarthome_ai_bot/handlers"
-	"syscall"
-
-	"google.golang.org/grpc"
 )
 
 const (
@@ -22,10 +15,6 @@ const (
 )
 
 func main() {
-	var opts []grpc.ServerOption
-
-	grpcServer := grpc.NewServer(opts...)
-
 	gpt35turboClient, err := gpt35turbo.NewClient(&gpt35turbo.Config{
 		OpenAIKey: os.Getenv("OPENAI_API_KEY"),
 	})
@@ -41,54 +30,17 @@ func main() {
 		log.Fatalf("failed to create ai bot: %v", err)
 	}
 
-	handler, err := handlers.NewGrpcV1(&handlers.Config{
+	httpHandler, err := handlers.NewHTTP(&handlers.Config{
 		AIBot: aiBot,
 	})
 	if err != nil {
 		log.Fatalf("failed to create grpc v1 handler: %v", err)
 	}
-	
-	smarthomeaibotapiv1.RegisterSmarthomeAIBotAPIServer(grpcServer, handler)
 
-	ctx := context.Background()
+	http.HandleFunc("/get_prompt_response", httpHandler.GetPromptResponse)
 
-	err = runServer(ctx, grpcServer, defaultPort)
+	err = http.ListenAndServe(":8080", nil)
 	if err != nil {
-		log.Fatalf("failed to run server: %v", err)
+		log.Fatal("ListenAndServe: ", err)
 	}
-}
-
-func runServer(ctx context.Context, srv *grpc.Server, port int) error {
-	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
-	if err != nil {
-		return err
-	}
-
-	runCtx, cancel := context.WithCancel(ctx)
-
-	go watchSignals(runCtx, cancel)
-
-	go func() {
-		if err = srv.Serve(lis); err != nil {
-			log.Printf("failed to serve: %v", err)
-		}
-	}()
-
-	log.Printf("!!! grpc server listening on port %d\n", port)
-
-	<-runCtx.Done()
-
-	log.Printf("!!! shutting down grpc server")
-
-	srv.GracefulStop()
-
-	return nil
-}
-
-func watchSignals(ctx context.Context, fn context.CancelFunc) {
-	ch := make(chan os.Signal, 1)
-	signal.Notify(ch, syscall.SIGINT, syscall.SIGTERM)
-	sig := <-ch
-	log.Printf("!!! received signal, shutting down: %v", sig)
-	fn()
 }
