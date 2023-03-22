@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"log"
 	"net/http"
 	"os"
@@ -50,8 +51,14 @@ func main() {
 
 	http.HandleFunc("/get_prompt_response", httpHandler.GetPromptResponse)
 
+	ctx := context.Background()
+
+	aiBot.CleanMemoryOnTimer(ctx)
+
 	err = http.ListenAndServe(":8080", nil)
 	if err != nil {
 		log.Fatal("ListenAndServe: ", err)
 	}
+
+	ctx.Done()
 }

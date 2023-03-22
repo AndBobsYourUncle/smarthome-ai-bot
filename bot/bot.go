@@ -9,6 +9,7 @@ import (
 	"smarthome_ai_bot/clients"
 	"smarthome_ai_bot/entities"
 	"strings"
+	"time"
 )
 
 type botImpl struct {
@@ -16,6 +17,7 @@ type botImpl struct {
 	messageHistory       []*entities.Message
 	promptClient         clients.PromptInterface
 	smarthomeClient      clients.SmarthomeAPI
+	lastBotActivity      time.Time
 }
 
 type Config struct {
@@ -84,6 +86,33 @@ func NewBot(cfg *Config) (Interface, error) {
 	}, nil
 }
 
+const memoryWipeTimeout = time.Minute * 10
+
+func (bot *botImpl) CleanMemoryOnTimer(ctx context.Context) {
+	go func() {
+		ticker := time.NewTicker(time.Second * 1)
+
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-ticker.C:
+				if time.Since(bot.lastBotActivity) < memoryWipeTimeout {
+					continue
+				}
+
+				bot.lastBotActivity = time.Now()
+
+				if len(bot.messageHistory) > 0 {
+					log.Println("wiping memory")
+
+					bot.messageHistory = nil
+				}
+			}
+		}
+	}()
+}
+
 func (bot *botImpl) getMessagesToSend() []*entities.Message {
 	// return a new slice of messages that contains the initial prompt context and the message history
 	messagesToSend := make([]*entities.Message, len(bot.initialPromptContext)+len(bot.messageHistory))
@@ -109,6 +138,8 @@ func extractStringCommand(s string) string {
 }
 
 func (bot *botImpl) GetResponseToUserMessage(ctx context.Context, userMessage string) (string, error) {
+	bot.lastBotActivity = time.Now()
+
 	messagesToSend := bot.getMessagesToSend()
 
 	lengthOfInitialMessages := len(messagesToSend)
