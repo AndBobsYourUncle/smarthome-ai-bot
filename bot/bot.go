@@ -85,6 +85,17 @@ func (bot *botImpl) getMessagesToSend() []*entities.Message {
 	return messagesToSend
 }
 
+func extractStringCommand(s string) string {
+	startIndex := strings.Index(s, "\"\"\"")
+	endIndex := strings.LastIndex(s, "\"\"\"")
+
+	if startIndex == -1 || endIndex == -1 {
+		return ""
+	}
+
+	return s[startIndex : endIndex+3]
+}
+
 func (bot *botImpl) GetResponseToUserMessage(ctx context.Context, userMessage string) (string, error) {
 	messagesToSend := bot.getMessagesToSend()
 
@@ -103,16 +114,28 @@ func (bot *botImpl) GetResponseToUserMessage(ctx context.Context, userMessage st
 		return "", err
 	}
 
+	botResponse := response.Content
+
+	stringCommand := extractStringCommand(response.Content)
+
+	if stringCommand != "" {
+		botResponse = stringCommand
+	}
+
+	if len(botResponse) < len(response.Content) {
+		log.Printf("Bot's original response: %v", response.Content)
+	}
+
+	log.Printf("Bot response: %v", botResponse)
+
 	messagesToSend = append(messagesToSend, &entities.Message{
 		Role:    entities.RoleBot,
-		Content: response.Content,
+		Content: botResponse,
 	})
 
-	log.Printf("Bot response: %v", response.Content)
-
 	// if the response contains a command, then we need to execute it
-	if strings.HasPrefix(response.Content, "\"\"\"") && strings.HasSuffix(response.Content, "\"\"\"") {
-		systemMessage, sysErr := bot.executeCommand(response.Content)
+	if stringCommand != "" {
+		systemMessage, sysErr := bot.executeCommand(stringCommand)
 		if sysErr != nil {
 			return "", sysErr
 		}

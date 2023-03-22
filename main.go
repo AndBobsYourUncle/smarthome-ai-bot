@@ -31,7 +31,8 @@ func main() {
 	}
 
 	httpHandler, err := handlers.NewHTTP(&handlers.Config{
-		AIBot: aiBot,
+		AIBot:          aiBot,
+		SpeechEndpoint: os.Getenv("SPEECH_ENDPOINT"),
 	})
 	if err != nil {
 		log.Fatalf("failed to create grpc v1 handler: %v", err)
