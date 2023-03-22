@@ -93,7 +93,7 @@ func (bot *botImpl) getMessagesToSend() []*entities.Message {
 	return messagesToSend
 }
 
-const stringCommandRegex = `\"\"\"[^\"]+\"\"\"`
+const stringCommandRegex = `\"\"\".*\"\"\"`
 
 func extractStringCommand(s string) string {
 	r := regexp.MustCompile(stringCommandRegex)
