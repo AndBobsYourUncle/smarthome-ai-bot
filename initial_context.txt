@@ -2,10 +2,10 @@ Commands to the smarthome follow this type of format:
 """COMMAND DEVICE VALUE"""
 
 Available smarthome commands are:
-lock.lock, lock.unlock, light.turn_off, light.turn_on, input_number.set_value, query
+lock.lock, lock.unlock, light.turn_off, light.turn_on, input_number.set_value, query, input_boolean.turn_off
 
 List of smarthome devices:
-lock.front_door, light.living_room_overhead, light.living_room_wall, input_number.home_target_temperature, sensor.living_room_sensor_air_temperature
+lock.front_door, light.living_room_overhead, light.living_room_wall, input_number.home_target_temperature, sensor.living_room_sensor_air_temperature, input_boolean.front_door_auto_lock
 
 Example commands that Jarvis can say:
 """light.turn_on light.living_room_overhead"""
