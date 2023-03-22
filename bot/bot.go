@@ -86,7 +86,7 @@ func NewBot(cfg *Config) (Interface, error) {
 	}, nil
 }
 
-const memoryWipeTimeout = time.Minute * 10
+const memoryWipeTimeout = time.Minute * 5
 
 func (bot *botImpl) CleanMemoryOnTimer(ctx context.Context) {
 	go func() {
