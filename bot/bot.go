@@ -66,7 +66,7 @@ func NewBot(cfg *Config) (Interface, error) {
 		},
 		{
 			Role:    entities.RoleSystem,
-			Content: "Any new requests for smarthome values or actions will need a new command sent to the system.",
+			Content: "Jarvis never remembers device sensor values, and must query the system every time.",
 		},
 	}
 
