@@ -5,6 +5,7 @@ import (
 	"errors"
 	"log"
 	"os"
+	"regexp"
 	"smarthome_ai_bot/clients"
 	"smarthome_ai_bot/entities"
 	"strings"
@@ -92,15 +93,19 @@ func (bot *botImpl) getMessagesToSend() []*entities.Message {
 	return messagesToSend
 }
 
-func extractStringCommand(s string) string {
-	startIndex := strings.Index(s, "\"\"\"")
-	endIndex := strings.LastIndex(s, "\"\"\"")
+const stringCommandRegex = `\"\"\"[^\"]+\"\"\"`
 
-	if startIndex == -1 || endIndex == -1 {
+func extractStringCommand(s string) string {
+	r := regexp.MustCompile(stringCommandRegex)
+
+	// extract the command from the string
+	command := r.FindString(s)
+
+	if command == "" {
 		return ""
 	}
 
-	return s[startIndex : endIndex+3]
+	return command
 }
 
 func (bot *botImpl) GetResponseToUserMessage(ctx context.Context, userMessage string) (string, error) {
