@@ -6,6 +6,7 @@ import (
 	"os"
 	"smarthome_ai_bot/bot"
 	"smarthome_ai_bot/clients/gpt35turbo"
+	"smarthome_ai_bot/clients/home_assistant_api"
 	"smarthome_ai_bot/handlers"
 )
 
@@ -22,9 +23,18 @@ func main() {
 		log.Fatalf("failed to create gpt35turbo client: %v", err)
 	}
 
+	homeAssistantClient, err := home_assistant_api.NewClient(&home_assistant_api.Config{
+		ApiHost:     os.Getenv("HOME_ASSISTANT_API_HOST"),
+		BearerToken: os.Getenv("HOME_ASSISTANT_BEARER_TOKEN"),
+	})
+	if err != nil {
+		log.Fatalf("failed to create home assistant client: %v", err)
+	}
+
 	aiBot, err := bot.NewBot(&bot.Config{
-		PromptClient:  gpt35turboClient,
-		UserShortName: os.Getenv("USER_SHORT_NAME"),
+		PromptClient:    gpt35turboClient,
+		SmarthomeClient: homeAssistantClient,
+		UserShortName:   os.Getenv("USER_SHORT_NAME"),
 	})
 	if err != nil {
 		log.Fatalf("failed to create ai bot: %v", err)

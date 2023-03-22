@@ -14,11 +14,13 @@ type botImpl struct {
 	initialPromptContext []*entities.Message
 	messageHistory       []*entities.Message
 	promptClient         clients.PromptInterface
+	smarthomeClient      clients.SmarthomeAPI
 }
 
 type Config struct {
-	UserShortName string
-	PromptClient  clients.PromptInterface
+	UserShortName   string
+	PromptClient    clients.PromptInterface
+	SmarthomeClient clients.SmarthomeAPI
 }
 
 func NewBot(cfg *Config) (Interface, error) {
@@ -32,6 +34,10 @@ func NewBot(cfg *Config) (Interface, error) {
 
 	if cfg.PromptClient == nil {
 		return nil, errors.New("missing parameter: cfg.PromptClient")
+	}
+
+	if cfg.SmarthomeClient == nil {
+		return nil, errors.New("missing parameter: cfg.SmarthomeClient")
 	}
 
 	// read initial context from file
@@ -54,7 +60,7 @@ func NewBot(cfg *Config) (Interface, error) {
 		},
 		{
 			Role:    entities.RoleBot,
-			Content: "\"\"\"query living_room_temperature_sensor\"\"\"",
+			Content: "\"\"\"query sensor.living_room_sensor_air_temperature\"\"\"",
 		},
 		{
 			Role:    entities.RoleSystem,
@@ -73,6 +79,7 @@ func NewBot(cfg *Config) (Interface, error) {
 	return &botImpl{
 		initialPromptContext: initialPromptContext,
 		promptClient:         cfg.PromptClient,
+		smarthomeClient:      cfg.SmarthomeClient,
 	}, nil
 }
 
@@ -135,7 +142,7 @@ func (bot *botImpl) GetResponseToUserMessage(ctx context.Context, userMessage st
 
 	// if the response contains a command, then we need to execute it
 	if stringCommand != "" {
-		systemMessage, sysErr := bot.executeCommand(stringCommand)
+		systemMessage, sysErr := bot.executeCommand(ctx, stringCommand)
 		if sysErr != nil {
 			return "", sysErr
 		}
@@ -166,7 +173,7 @@ func (bot *botImpl) GetResponseToUserMessage(ctx context.Context, userMessage st
 	return response.Content, nil
 }
 
-func (bot *botImpl) executeCommand(command string) (*entities.Message, error) {
+func (bot *botImpl) executeCommand(ctx context.Context, command string) (*entities.Message, error) {
 	// extract the command from the string
 	command = strings.TrimPrefix(command, "\"\"\"")
 	command = strings.TrimSuffix(command, "\"\"\"")
@@ -181,32 +188,35 @@ func (bot *botImpl) executeCommand(command string) (*entities.Message, error) {
 	if commandName == "query" {
 		entityName := strings.TrimPrefix(command, "query ")
 
-		switch entityName {
-		case "living_room_temperature_sensor":
+		entityResponse, err := bot.smarthomeClient.QueryEntity(ctx, entityName)
+		if err != nil {
 			return &entities.Message{
 				Role:    entities.RoleSystem,
-				Content: "75 degrees",
-			}, nil
-		case "front_door_lock":
-			return &entities.Message{
-				Role:    entities.RoleSystem,
-				Content: "locked",
-			}, nil
-		case "living_room_light":
-			return &entities.Message{
-				Role:    entities.RoleSystem,
-				Content: "on",
-			}, nil
-		case "living_room_thermostat":
-			return &entities.Message{
-				Role:    entities.RoleSystem,
-				Content: "72 degrees",
+				Content: "system failed to execute command",
 			}, nil
 		}
-	}
 
-	return &entities.Message{
-		Role:    entities.RoleSystem,
-		Content: "system executed command successfully",
-	}, nil
+		return &entities.Message{
+			Role:    entities.RoleSystem,
+			Content: entityResponse,
+		}, nil
+	} else {
+		entityName := strings.TrimPrefix(command, commandName)
+
+		// remove the first space
+		entityName = strings.TrimPrefix(entityName, " ")
+
+		response, err := bot.smarthomeClient.PerformService(ctx, commandName, entityName)
+		if err != nil {
+			return &entities.Message{
+				Role:    entities.RoleSystem,
+				Content: "system failed to execute command",
+			}, nil
+		}
+
+		return &entities.Message{
+			Role:    entities.RoleSystem,
+			Content: response,
+		}, nil
+	}
 }

@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"smarthome_ai_bot/bot"
 )
@@ -75,7 +74,10 @@ func (s *httpImpl) GetPromptResponse(w http.ResponseWriter, r *http.Request) {
 
 	resp, err := http.Post(s.speechEndpoint, "application/json", responseBody)
 	if err != nil {
-		log.Printf("An Error Occured %v\n", err)
+		w.WriteHeader(500)
+		_, _ = io.WriteString(w, "error: "+err.Error())
+
+		return
 	}
 	defer resp.Body.Close()
 
