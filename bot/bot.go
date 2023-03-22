@@ -206,7 +206,15 @@ func (bot *botImpl) executeCommand(ctx context.Context, command string) (*entiti
 		// remove the first space
 		entityName = strings.TrimPrefix(entityName, " ")
 
-		response, err := bot.smarthomeClient.PerformService(ctx, commandName, entityName)
+		// extract a value if there is a space and then a value
+		value := ""
+
+		if strings.Contains(entityName, " ") {
+			value = strings.Split(entityName, " ")[1]
+			entityName = strings.Split(entityName, " ")[0]
+		}
+
+		response, err := bot.smarthomeClient.PerformService(ctx, commandName, entityName, value)
 		if err != nil {
 			return &entities.Message{
 				Role:    entities.RoleSystem,

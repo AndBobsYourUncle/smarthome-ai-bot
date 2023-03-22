@@ -41,7 +41,13 @@ func NewClient(cfg *Config) (clients.SmarthomeAPI, error) {
 	}, nil
 }
 
-func (client *clientImpl) PerformService(ctx context.Context, service, entityID string) (string, error) {
+type performServiceRequest struct {
+	EntityID      string `json:"entity_id"`
+	Value         string `json:"value,omitempty"`
+	BrightnessPCT string `json:"brightness_pct,omitempty"`
+}
+
+func (client *clientImpl) PerformService(ctx context.Context, service, entityID, setValue string) (string, error) {
 	// replace all dots in service with a forward slash
 	service = strings.ReplaceAll(service, ".", "/")
 
@@ -53,10 +59,29 @@ func (client *clientImpl) PerformService(ctx context.Context, service, entityID 
 	var bearer = "Bearer " + client.bearerToken
 
 	// make an io reader for the json body
-	postBody := []byte(`{"entity_id": "` + entityID + `"}`)
-	bodyReader := bytes.NewReader(postBody)
+	var postBody performServiceRequest
 
-	log.Printf("url: %s json: %s", serviceUrl, postBody)
+	postBody = performServiceRequest{
+		EntityID: entityID,
+	}
+
+	switch service {
+	case "light/turn_on":
+		postBody.BrightnessPCT = setValue
+	case "input_number/set_value":
+		postBody.Value = setValue
+	default:
+		postBody.Value = setValue
+	}
+
+	jsonBody, err := json.Marshal(postBody)
+	if err != nil {
+		return "", err
+	}
+
+	bodyReader := bytes.NewReader(jsonBody)
+
+	log.Printf("url: %s json: %s", serviceUrl, jsonBody)
 
 	// Create a new request using http
 	req, err := http.NewRequest("POST", url, bodyReader)
