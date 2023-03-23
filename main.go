@@ -13,7 +13,7 @@ import (
 
 const (
 	// defaultPort is the default port that the server will listen on
-	defaultPort = 5001
+	defaultPort = "8080"
 )
 
 func main() {
@@ -55,7 +55,13 @@ func main() {
 
 	aiBot.CleanMemoryOnTimer(ctx)
 
-	err = http.ListenAndServe(":8080", nil)
+	defaultPortEnv := os.Getenv("PORT")
+
+	if defaultPortEnv == "" {
+		defaultPortEnv = defaultPort
+	}
+
+	err = http.ListenAndServe(":"+defaultPortEnv, nil)
 	if err != nil {
 		log.Fatal("ListenAndServe: ", err)
 	}
