@@ -14,3 +14,9 @@ RUN apt-get update && \
 COPY . /root/smarthome_ai_bot
 
 WORKDIR /root/smarthome_ai_bot
+
+RUN go build
+
+RUN chmod +x entrypoint.sh
+
+CMD [ "/bin/bash", "-c", "/root/smarthome_ai_bot/entrypoint.sh" ]
