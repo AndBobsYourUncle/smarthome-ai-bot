@@ -7,3 +7,7 @@ RUN apt-get update && \
         golang && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
+
+COPY . /root/smarthome_ai_bot
+
+WORKDIR /root/smarthome_ai_bot
